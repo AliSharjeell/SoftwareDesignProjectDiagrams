@@ -1,0 +1,156 @@
+@startuml
+top to bottom direction
+
+skinparam shadowing false
+skinparam Padding 12
+skinparam backgroundColor #0b1120
+
+skinparam actorStyle awesome
+skinparam actor {
+  FontColor #f8fafc
+  BorderColor #f8fafc
+  BackgroundColor transparent
+}
+skinparam usecase {
+  BackgroundColor #10263a
+  BorderColor #4c7ec4
+  FontColor #e2e8f0
+  ArrowColor #5f7ea5
+  BorderThickness 1
+}
+skinparam rectangle {
+  BackgroundColor #d7f2dd
+  BorderColor #1f7a47
+  RoundCorner 12
+  FontColor #0f172a
+}
+
+actor Student
+actor Faculty
+actor Admin
+actor "Supabase / Postgres" as Database
+actor "External Auth Provider" as ExternalAuth
+
+rectangle "FlexPro Platform" as System {
+  rectangle "Student Experiences" as Stu #153453 {
+    usecase "Student Portal" as UC_StudentPortal
+    usecase "View Dashboard" as UC_Dashboard
+    usecase "Manage Profile" as UC_Profile
+    usecase "Track Attendance" as UC_Attendance
+    usecase "View Study Plan" as UC_StudyPlan
+    usecase "Manage Enrollments" as UC_Enrollment
+    usecase "View Transcript" as UC_Transcript
+    usecase "Request Grade Review" as UC_GradeReview
+    usecase "Submit Feedback" as UC_Feedback
+    usecase "View Notifications" as UC_Notifications
+    usecase "Pay Fees & Challans" as UC_Fees
+    usecase "Download PDF Documents" as UC_PDFs
+  }
+
+  rectangle "Faculty Toolkit" as Fac #19395c {
+    usecase "Faculty Workspace" as UC_FacultyWorkspace
+    usecase "View Teaching Assignments" as UC_TeachingAssignments
+    usecase "Record Attendance" as UC_FacultyAttendance
+    usecase "Record Student Notes" as UC_Notes
+    usecase "Manage Marks" as UC_Marks
+    usecase "Finalize Grades" as UC_Finalize
+    usecase "Respond to Grade Reviews" as UC_GradeReviewResponse
+    usecase "View Feedback Analytics" as UC_FeedbackAnalytics
+    usecase "View Notifications" as UC_FacultyNotifications
+    usecase "Download PDF Documents" as UC_FacultyPDFs
+  }
+
+  rectangle "Admin Console" as Adm #1d3f65 {
+    usecase "Admin Control Center" as UC_AdminCenter
+    usecase "Manage Courses" as UC_Courses
+    usecase "Manage Sections" as UC_Sections
+    usecase "Assign Faculty" as UC_AssignFaculty
+    usecase "Manage Faculty Accounts" as UC_FacultyAccounts
+    usecase "Review Feedback Reports" as UC_AdminFeedback
+    usecase "Configure Settings" as UC_Settings
+    usecase "Broadcast Notifications" as UC_AdminNotifications
+    usecase "Review Admissions & Enrollment" as UC_AdminEnrollment
+  }
+
+  usecase "Persist Data" as UC_Persist
+  usecase "Authenticate Users" as UC_Auth
+}
+
+Student -down-> UC_StudentPortal
+Faculty -down-> UC_FacultyWorkspace
+Admin -down-> UC_AdminCenter
+
+UC_StudentPortal --> UC_Dashboard : <<include>>
+UC_StudentPortal --> UC_Profile : <<include>>
+UC_StudentPortal --> UC_Attendance : <<include>>
+UC_StudentPortal --> UC_StudyPlan : <<include>>
+UC_StudentPortal --> UC_Enrollment : <<include>>
+UC_StudentPortal --> UC_Transcript : <<include>>
+UC_StudentPortal --> UC_GradeReview : <<include>>
+UC_StudentPortal --> UC_Feedback : <<include>>
+UC_StudentPortal --> UC_Notifications : <<include>>
+UC_StudentPortal --> UC_Fees : <<include>>
+UC_StudentPortal --> UC_PDFs : <<include>>
+
+UC_FacultyWorkspace --> UC_TeachingAssignments : <<include>>
+UC_FacultyWorkspace --> UC_FacultyAttendance : <<include>>
+UC_FacultyWorkspace --> UC_Notes : <<include>>
+UC_FacultyWorkspace --> UC_Marks : <<include>>
+UC_FacultyWorkspace --> UC_Finalize : <<include>>
+UC_FacultyWorkspace --> UC_GradeReviewResponse : <<include>>
+UC_FacultyWorkspace --> UC_FeedbackAnalytics : <<include>>
+UC_FacultyWorkspace --> UC_FacultyNotifications : <<include>>
+UC_FacultyWorkspace --> UC_FacultyPDFs : <<include>>
+
+UC_AdminCenter --> UC_Courses : <<include>>
+UC_AdminCenter --> UC_Sections : <<include>>
+UC_AdminCenter --> UC_AssignFaculty : <<include>>
+UC_AdminCenter --> UC_FacultyAccounts : <<include>>
+UC_AdminCenter --> UC_AdminFeedback : <<include>>
+UC_AdminCenter --> UC_Settings : <<include>>
+UC_AdminCenter --> UC_AdminNotifications : <<include>>
+UC_AdminCenter --> UC_AdminEnrollment : <<include>>
+
+note right of UC_StudentPortal
+  * Self-service dashboards and alerts
+  * Academic planning (study plan, enrollment, transcripts)
+  * Service desk touchpoints (grade reviews, feedback, fees)
+end note
+
+note right of UC_FacultyWorkspace
+  * Daily teaching operations (attendance, notes)
+  * Assessment lifecycle (marks, finalization, grade reviews)
+  * Quality insights via feedback analytics
+end note
+
+note right of UC_AdminCenter
+  * Catalogue governance (courses, sections, faculty assignments)
+  * Compliance & communications (notifications, feedback reviews)
+  * Lifecycle oversight (admissions, enrollment statuses)
+end note
+
+UC_Marks --> UC_Finalize : <<include>>
+UC_Courses --> UC_Sections : <<include>>
+UC_Sections --> UC_AssignFaculty : <<include>>
+UC_TeachingAssignments --> UC_Marks : <<extend>>
+UC_GradeReview --> UC_GradeReviewResponse : <<include>>
+UC_Feedback --> UC_FeedbackAnalytics : <<extend>>
+UC_AdminEnrollment --> UC_AssignFaculty : <<extend>>
+
+Database .. UC_Persist : <<CRUD>>
+UC_Persist --> UC_StudentPortal
+UC_Persist --> UC_FacultyWorkspace
+UC_Persist --> UC_AdminCenter
+
+ExternalAuth .. UC_Auth : <<OAuth/JWT>>
+UC_Auth --> UC_StudentPortal
+UC_Auth --> UC_FacultyWorkspace
+UC_Auth --> UC_AdminCenter
+
+legend right
+  |= Role |= Description |
+  | Student | Learner accessing academic services |
+  | Faculty | Instructor managing coursework & evaluations |
+  | Admin | Administrator overseeing platform operations |
+endlegend
+@enduml

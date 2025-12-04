@@ -1,0 +1,96 @@
+@startuml
+title FlexPro Session Lifecycle Timing Overview
+
+robust "User" as User
+robust "Next.js App" as App
+robust "Supabase Auth" as Auth
+robust "Postgres DB" as DB
+robust "Queue" as Queue
+robust "Identity Service" as ID
+robust "Scheduler" as Scheduler
+robust "Analytics" as Analytics
+
+User is Idle
+App is Idle
+Auth is Idle
+DB is Idle
+Queue is Idle
+ID is Idle
+Scheduler is Idle
+Analytics is Idle
+
+@0
+User -> App : Login request
+User is Waiting
+App is Processing
+
+@5
+App -> Auth : Validate user
+Auth is Processing
+
+@10
+Auth -> App : Auth OK
+App is Processing
+
+@15
+App -> DB : Preload data
+DB is Processing
+
+@25
+App -> DB : Enrollment (Prisma tx)
+DB is Processing
+
+@30
+DB -> App : Commit OK
+DB is Idle
+
+@35
+DB -> Queue : Emit events
+Queue is Processing
+
+@40
+App -> DB : Create support ticket
+DB is Processing
+
+@50
+App -> DB : Attendance update
+DB is Processing
+
+@55
+App -> DB : Publish grades
+DB is Processing
+
+@60
+DB -> App : Appeal opened
+App is Processing
+
+@65
+App -> Queue : Appeal resolved
+Queue is Processing
+
+@75
+App -> DB : Catalog update
+DB is Processing
+
+@80
+ID -> App : Identity verification
+App -> DB : Update faculty status
+DB is Processing
+
+@85
+App -> Queue : Admin notifications
+Queue is Processing
+
+@95
+DB -> Analytics : Stream changes
+Analytics is Processing
+
+@100
+Scheduler -> App : Refresh dashboards
+App is Processing
+
+@110
+App -> User : Email/SMS + updated UI
+User is Viewing
+
+@enduml

@@ -1,0 +1,90 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam componentStyle rectangle
+
+package "Client Devices" {
+    component "Browsers & Mobile Web" as Browser
+}
+
+package "Vercel Edge Network" {
+    component "CDN & Edge Cache" as CDN
+}
+
+package "Vercel Hosted Platform" {
+    package "Next.js App Router" {
+        component "App Router Pages" as Pages
+        component "API Routes" as APIRoutes
+    }
+    
+    package "Serverless Functions" {
+        component "Student Functions" as StudentFn
+        component "Faculty Functions" as FacultyFn
+        component "Admin Functions" as AdminFn
+        component "Support Functions" as SupportFn
+        component "Analytics Functions" as AnalyticsFn
+        component "Notification Worker" as NotificationFn
+        component "Scheduled Job Handler" as SchedulerFn
+    }
+}
+
+package "Supabase Cloud" {
+    component "Auth Service" as AuthSvc
+    database "Postgres Database" as Postgres
+    component "Storage Buckets" as StorageSvc
+}
+
+package "Analytics & Observability" {
+    database "Analytics Warehouse" as Warehouse
+    component "Cron / BI Jobs" as DashboardJobs
+}
+
+package "External Integrations" {
+    component "Payment Gateway" as PaymentGw
+    component "KYC Provider" as KYCProvider
+    component "Email/SMS Platform" as EmailSMS
+    component "LMS & Marketing Sync" as LMSSync
+    component "Department Channels" as DeptChannels
+}
+
+Browser --> CDN
+CDN --> Pages
+Pages --> APIRoutes
+Pages --> AuthSvc
+
+APIRoutes --> StudentFn
+APIRoutes --> FacultyFn
+APIRoutes --> AdminFn
+APIRoutes --> SupportFn
+APIRoutes --> AnalyticsFn
+
+StudentFn --> Postgres
+StudentFn --> StorageSvc
+FacultyFn --> Postgres
+FacultyFn --> StorageSvc
+AdminFn --> Postgres
+AdminFn --> StorageSvc
+SupportFn --> Postgres
+SupportFn --> StorageSvc
+AnalyticsFn --> Postgres
+AnalyticsFn --> Warehouse
+
+NotificationFn --> EmailSMS
+NotificationFn --> DeptChannels
+NotificationFn --> LMSSync
+SchedulerFn --> NotificationFn
+SchedulerFn --> Warehouse
+
+AdminFn --> KYCProvider
+AdminFn --> PaymentGw
+StudentFn --> PaymentGw
+
+Postgres --> Warehouse
+DashboardJobs --> Warehouse
+DashboardJobs --> NotificationFn
+
+AuthSvc --> Postgres
+AuthSvc --> Pages
+
+@enduml

@@ -1,0 +1,104 @@
+@startuml
+autonumber
+
+actor Student
+actor Faculty
+actor Admin
+
+participant "Next.js UI" as UI
+participant "Auth API" as Auth
+participant "Course API" as CourseAPI
+participant "Enrollment API" as EnrollAPI
+participant "Challan API" as ChallanAPI
+participant "Faculty API" as FacultyAPI
+participant "Admin Management API" as AdminAPI
+participant "Database" as DB
+
+group Student Flows
+    Student -> UI: Open Student Dashboard
+    UI -> Auth: Validate session
+    Auth -> DB: Fetch user role
+    DB --> Auth: Role=Student
+    Auth --> UI: Session OK
+
+    Student -> UI: View Courses Page
+    UI -> CourseAPI: GET /api/courses
+    CourseAPI -> DB: Fetch all courses
+    DB --> CourseAPI: Course list
+    CourseAPI --> UI: Send courses
+    UI --> Student: Show courses list
+
+    Student -> UI: Click "Enroll"
+    UI -> EnrollAPI: POST /api/enroll
+    EnrollAPI -> DB: Insert enrollment
+    DB --> EnrollAPI: Success
+    EnrollAPI --> UI: Enrollment OK
+    UI --> Student: Show confirmation
+
+    Student -> UI: Click "Drop Course"
+    UI -> EnrollAPI: DELETE /api/enroll
+    EnrollAPI -> DB: Remove enrollment
+    DB --> EnrollAPI: Deleted
+    EnrollAPI --> UI: Drop OK
+    UI --> Student: Updated list
+
+    Student -> UI: View Challan Page
+    UI -> ChallanAPI: GET /api/challan?userId
+    ChallanAPI -> DB: Fetch challan
+    DB --> ChallanAPI: Challan details
+    ChallanAPI --> UI: Send challan data
+    UI --> Student: Display challan
+end
+
+group Faculty Flows
+    Faculty -> UI: Open Faculty Dashboard
+    UI -> Auth: Validate session
+    Auth -> DB: Get role
+    DB --> Auth: Role=Faculty
+    Auth --> UI: Session OK
+
+    Faculty -> UI: View Assigned Courses
+    UI -> FacultyAPI: GET /api/faculty/courses
+    FacultyAPI -> DB: Fetch faculty courses
+    DB --> FacultyAPI: Result
+    FacultyAPI --> UI: Send data
+    UI --> Faculty: Show courses
+
+    Faculty -> UI: View Enrolled Students
+    UI -> FacultyAPI: GET /api/faculty/students
+    FacultyAPI -> DB: Fetch students
+    DB --> FacultyAPI: Result
+    FacultyAPI --> UI: Student list
+    UI --> Faculty: Display students
+end
+
+group Admin Flows
+    Admin -> UI: Open Admin Dashboard
+    UI -> Auth: Validate session
+    Auth -> DB: Fetch role
+    DB --> Auth: Role=Admin
+    Auth --> UI: Session OK
+
+    Admin -> UI: Manage Courses Page
+    UI -> AdminAPI: GET /api/admin/courses
+    AdminAPI -> DB: Fetch all courses
+    DB --> AdminAPI: Course data
+    AdminAPI --> UI: Send list
+    UI --> Admin: Show management panel
+
+    Admin -> UI: Add/Edit/Delete Course
+    UI -> AdminAPI: POST/PUT/DELETE /api/admin/course
+    AdminAPI -> DB: Perform update
+    DB --> AdminAPI: OK
+    AdminAPI --> UI: Update success
+    UI --> Admin: Updated course list
+
+    Admin -> UI: Manage Faculty
+    UI -> AdminAPI: GET /api/admin/faculty
+    AdminAPI -> DB: Fetch faculty
+    DB --> AdminAPI: Data
+    AdminAPI --> UI: List
+    UI --> Admin: Display faculty management panel
+end
+
+@enduml

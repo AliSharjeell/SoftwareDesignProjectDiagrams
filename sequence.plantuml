@@ -1,0 +1,159 @@
+@startuml
+autonumber
+
+actor Student
+actor Faculty
+actor Admin
+participant "Next.js App Router/UI" as UI
+participant "Supabase Auth" as Auth
+participant "Student API Routes" as StudentAPI
+participant "Faculty API Routes" as FacultyAPI
+participant "Admin API Routes" as AdminAPI
+participant "Prisma ORM" as Prisma
+participant "Supabase Postgres" as DB
+participant "Supabase Storage" as Storage
+queue "Notification Queue" as Queue
+participant "Analytics Warehouse" as Analytics
+participant "External Integrations" as External
+
+note over Student, Admin: Unified login flow establishes Supabase session for all personas
+
+Student -> UI: Request student workspace
+Faculty -> UI: Request faculty workspace
+Admin -> UI: Request admin workspace
+UI -> Auth: Authenticate credentials
+Auth --> UI: Session tokens & claims
+
+UI -> StudentAPI: Bootstrap student dashboard context
+UI -> FacultyAPI: Bootstrap faculty dashboard context
+UI -> AdminAPI: Bootstrap admin dashboard context
+
+par Student bootstrap
+    StudentAPI -> Prisma: Fetch enrollment, attendance, finance state
+    Prisma -> DB: SELECT student_* tables
+    DB --> Prisma: Student datasets
+    Prisma --> StudentAPI: Hydrated student view-model
+    StudentAPI --> UI: Student dashboard payload
+    UI --> Student: Render study plan, attendance, fees
+else Faculty bootstrap
+    FacultyAPI -> Prisma: Query sections, assessments, notes
+    Prisma -> DB: SELECT faculty_* tables
+    DB --> Prisma: Faculty datasets
+    Prisma --> FacultyAPI: Hydrated faculty view-model
+    FacultyAPI --> UI: Faculty workspace payload
+    UI --> Faculty: Render section dashboards & tools
+else Admin bootstrap
+    AdminAPI -> Prisma: Aggregate KPIs, catalog listings, account statuses
+    Prisma -> DB: SELECT admin_* materialized views
+    DB --> Prisma: Admin datasets
+    Prisma --> AdminAPI: Hydrated admin view-model
+    AdminAPI --> UI: Admin command center payload
+    UI --> Admin: Render KPI dashboards & queues
+end
+
+note over Student, Queue: Student lifecycle
+Student -> UI: Enroll in course & pay outstanding fees
+UI -> StudentAPI: POST /enroll {courseId}
+StudentAPI -> Prisma: Begin enrollment transaction
+Prisma -> DB: INSERT enrollment row
+DB --> Prisma: Enrollment committed
+StudentAPI -> Queue: Publish enrollment.created
+StudentAPI -> UI: Enrollment confirmation
+UI --> Student: Updated course schedule
+
+alt Outstanding balance
+    Student -> UI: Complete payment workflow
+    UI -> StudentAPI: POST /fees/charge {amount}
+    StudentAPI -> External: Invoke payment gateway
+    External --> StudentAPI: Payment success token
+    StudentAPI -> Prisma: Record ledger entry
+    Prisma -> DB: INSERT payment row
+    StudentAPI -> Queue: Publish finance.payment_cleared
+    Queue --> External: Dispatch receipting email
+end
+
+opt Support ticket filed
+    Student -> UI: Submit support ticket with attachment
+    UI -> StudentAPI: POST /support {summary, attachment}
+    StudentAPI -> Storage: Upload evidence artefact
+    Storage --> StudentAPI: Signed URL
+    StudentAPI -> Prisma: INSERT support ticket metadata
+    StudentAPI -> Queue: Publish support.ticket_opened
+    Queue --> External: Notify student-success team
+end
+
+
+note over Faculty, Queue: Faculty lifecycle
+Faculty -> UI: Record attendance exception
+UI -> FacultyAPI: POST /attendance/exception {sectionId}
+FacultyAPI -> Prisma: Update attendance ledger
+Prisma -> DB: UPDATE attendance records
+FacultyAPI -> Queue: Publish attendance.exception flag
+Queue --> External: Notify advising team
+
+Faculty -> UI: Publish assessment & initial grades
+UI -> FacultyAPI: POST /assessments {rubric}
+FacultyAPI -> Storage: Upload rubric assets
+Storage --> FacultyAPI: Storage references
+FacultyAPI -> Prisma: CREATE assessment rows
+Prisma -> DB: INSERT assessment metadata
+FacultyAPI -> Queue: Publish assessment.created
+FacultyAPI --> UI: Assessment published
+UI --> Faculty: Confirmation
+
+alt Grade appeal submitted
+    Student -> Queue: grade.appeal_opened event
+    Queue --> FacultyAPI: Deliver appeal payload
+    FacultyAPI -> Prisma: Flag grade for review
+    Prisma -> DB: UPDATE grade status
+    FacultyAPI --> UI: Prompt faculty for adjudication
+    Faculty -> UI: Resolve appeal
+    UI -> FacultyAPI: PATCH /grades/{id}/resolve
+    FacultyAPI -> Prisma: UPDATE grade outcome
+    FacultyAPI -> Queue: Publish grade.appeal_resolved
+end
+
+note over Admin, Queue: Admin lifecycle
+Admin -> UI: Adjust course catalog & faculty roster
+UI -> AdminAPI: PATCH /catalog {course changes}
+AdminAPI -> Prisma: Apply catalog mutations
+Prisma -> DB: UPSERT course entries
+AdminAPI -> Queue: Publish catalog.updated
+Queue --> External: Notify marketing & LMS sync jobs
+
+Admin -> UI: Manage faculty account onboarding
+UI -> AdminAPI: POST /faculty/invite {profile}
+AdminAPI -> External: Invoke identity verification provider
+External --> AdminAPI: Verification pending token
+AdminAPI -> Prisma: INSERT invite record
+AdminAPI -> Queue: Publish faculty.invited
+
+alt Verification approved
+    AdminAPI -> Prisma: UPDATE faculty status active
+    AdminAPI -> Queue: Publish faculty.activated
+else Additional documentation required
+    AdminAPI -> Queue: Publish faculty.review_required
+end
+
+Admin -> UI: Triage critical feedback
+UI -> AdminAPI: POST /feedback/{id}/escalate
+AdminAPI -> Prisma: UPDATE feedback status escalated
+AdminAPI -> Queue: Publish feedback.escalated
+Queue --> External: Notify department channel
+
+note over Queue, Analytics: Shared observability & analytics
+par Change data capture
+    Queue -> Analytics: Stream event payloads
+    Analytics -> DB: Query latest state for aggregation
+    Analytics --> AdminAPI: Updated KPI snapshot
+    AdminAPI --> UI: Refresh admin dashboards
+else Audit trail persistence
+    StudentAPI -> Storage: Persist receipts & reports
+    FacultyAPI -> Storage: Archive assessment exports
+    AdminAPI -> Storage: Store compliance artifacts
+    StudentAPI -> DB: Append audit ledgers
+    FacultyAPI -> DB: Append audit ledgers
+    AdminAPI -> DB: Append audit ledgers
+end
+
+@enduml

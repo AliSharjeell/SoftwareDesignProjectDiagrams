@@ -1,0 +1,184 @@
+@startuml
+
+start
+:Start;
+
+switch (Role In Session?)
+case (None)
+    repeat
+        :Show Login Page;
+        if (Submit Credentials?) then (Yes)
+            :Call Login API;
+            if (Valid Login?) then (Yes)
+                break
+            else (No)
+                :Show Login Error;
+            endif
+        else (No)
+        endif
+    repeat while (Retry Login)
+    
+case (Student)
+    package "Student Workflow" {
+        :Student Dashboard;
+        switch (Choose Option)
+        case (My Courses)
+            :Load Student Courses;
+            :GET Courses API;
+            if (Success?) then (Yes)
+                :Show Courses;
+            else (No)
+                :Error;
+            endif
+        case (Enroll)
+            :Show Enroll Page;
+            :GET Enroll List;
+            if (Success?) then (Yes)
+                :Show Available Courses;
+                switch (Pick Action)
+                case (Enroll)
+                    :POST Enroll API;
+                case (Drop)
+                    :DELETE Enroll API;
+                endswitch
+                if (Success?) then (Yes)
+                    :Update UI;
+                else (No)
+                    :Show Error;
+                endif
+            else (No)
+                :Error;
+            endif
+        case (Attendance)
+            :Show Attendance;
+            :GET Attendance API;
+            if (Success?) then (Yes)
+                :Display Attendance;
+            else (No)
+                :Error;
+            endif
+        case (Grades)
+            :Show Grade Page;
+            :GET Grades API;
+            if (Success?) then (Yes)
+                :Show Grades;
+            else (No)
+                :Error;
+            endif
+        case (Feedback)
+            :Show Feedback;
+            :GET Feedback API;
+            if (Success?) then (Yes)
+                :Feedback List;
+                if (Submit Feedback?) then (Yes)
+                    :POST Feedback;
+                endif
+            else (No)
+                :Error;
+            endif
+        case (Profile)
+            :Show Profile;
+            :GET Profile API;
+            if (Success?) then (Yes)
+                :Display Profile;
+                if (Edit?) then (Yes)
+                    :PATCH Profile;
+                endif
+            else (No)
+                :Error;
+            endif
+        case (Fee)
+            :Show Fee Page;
+            :GET Fee API;
+            if (Success?) then (Yes)
+                :Fee Details;
+                if (Generate Challan?) then (Yes)
+                    :Generate Challan;
+                endif
+            else (No)
+                :Error;
+            endif
+        case (Transcript)
+            :Show Transcript;
+            :GET Transcript API;
+            if (Success?) then (Yes)
+                :Display Transcript;
+            else (No)
+                :Error;
+            endif
+        endswitch
+    }
+
+case (Faculty)
+    package "Faculty Workflow" {
+        :Faculty Dashboard;
+        switch (Choose Option)
+        case (Dashboard Summary)
+            :Load Faculty Summary;
+            :GET Summary API;
+        case (Record Attendance)
+            :Show Faculty Attendance;
+            :GET Teaching List;
+            if (Success?) then (Yes)
+                :Show Sections;
+                :GET Attendance Page;
+                if (Success?) then (Yes)
+                    :Mark Attendance;
+                    :POST Attendance;
+                else (No)
+                    :Error;
+                endif
+            else (No)
+                :Error;
+            endif
+        endswitch
+    }
+
+case (Admin)
+    package "Admin Workflow" {
+        :Admin Dashboard;
+        switch (Choose Option)
+        case (Courses)
+            :Course Page;
+            :GET Course API;
+            if (Success?) then (Yes)
+                :Course List;
+                switch (Action)
+                case (Add)
+                    :Add Course;
+                case (Edit)
+                    :Edit Course;
+                case (Delete)
+                    :Delete Course;
+                endswitch
+            else (No)
+                :Error;
+            endif
+        case (Students)
+            :Student Page;
+            :GET Students API;
+            if (Success?) then (Yes)
+                :Student List;
+            else (No)
+                :Error;
+            endif
+        case (Faculty)
+            :Faculty Page;
+            :GET Faculty API;
+            if (Success?) then (Yes)
+                :Faculty List;
+            else (No)
+                :Error;
+            endif
+        case (Notifications)
+            :Notification Page;
+            :Post Notification;
+        case (Settings)
+            :Settings Page;
+            :GET Settings;
+        endswitch
+    }
+endswitch
+
+stop
+@enduml

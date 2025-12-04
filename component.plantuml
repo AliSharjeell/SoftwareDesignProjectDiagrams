@@ -1,0 +1,96 @@
+@startuml
+top to bottom direction
+skinparam componentStyle uml2
+
+package "Client Applications" {
+    component "Student Dashboard" as StudentApp
+    component "Faculty Workspace" as FacultyApp
+    component "Admin Console" as AdminApp
+}
+
+package "Next.js App Router Layer" {
+    component "Routing & Middleware" as Routing
+    component "Shared UI Components" as UIComponents
+    component "SSR/ISR Handlers" as SSRHandlers
+}
+
+package "Serverless API & Service Layer" {
+    component "Student Service" as StudentSvc
+    component "Faculty Service" as FacultySvc
+    component "Admin Service" as AdminSvc
+    component "Support & Feedback Service" as SupportSvc
+    component "Analytics Aggregation Service" as AnalyticsSvc
+    component "Notification Orchestrator" as NotificationSvc
+    component "Scheduled Job Runner" as SchedulerSvc
+}
+
+package "Core Platform Services" {
+    component "Prisma ORM" as Prisma
+    database "Supabase Postgres" as Postgres
+    component "Supabase Storage" as Storage
+    component "Supabase Auth" as Auth
+    queue "Notification Queue" as Queue
+    database "Analytics Warehouse" as Warehouse
+}
+
+package "External Integrations" {
+    component "Payment Gateway" as Payment
+    component "KYC Provider" as KYC
+    component "Email/SMS Delivery" as Email
+    component "LMS & Marketing Sync" as LMS
+    component "Department Communication Channels" as DeptComm
+}
+
+StudentApp --> Routing
+FacultyApp --> Routing
+AdminApp --> Routing
+Routing --> UIComponents
+UIComponents --> SSRHandlers
+
+SSRHandlers --> StudentSvc
+SSRHandlers --> FacultySvc
+SSRHandlers --> AdminSvc
+SSRHandlers --> SupportSvc
+SSRHandlers --> AnalyticsSvc
+
+StudentSvc --> Prisma
+FacultySvc --> Prisma
+AdminSvc --> Prisma
+SupportSvc --> Prisma
+AnalyticsSvc --> Prisma
+NotificationSvc --> Queue
+SchedulerSvc --> Queue
+SchedulerSvc --> Warehouse
+
+Prisma --> Postgres
+StudentSvc --> Storage
+FacultySvc --> Storage
+AdminSvc --> Storage
+SupportSvc --> Storage
+NotificationSvc --> Storage
+
+Auth --> Routing
+Routing --> Auth
+
+Queue --> Email
+Queue --> DeptComm
+Queue --> LMS
+
+StudentSvc --> Payment
+AdminSvc --> KYC
+AdminSvc --> LMS
+
+Warehouse --> AnalyticsSvc
+Warehouse --> AdminSvc
+Warehouse --> FacultySvc
+Warehouse --> StudentSvc
+
+Payment --> Queue
+KYC --> AdminSvc
+Email --> StudentApp
+Email --> FacultyApp
+Email --> AdminApp
+DeptComm --> AdminApp
+LMS --> AdminApp
+
+@enduml
